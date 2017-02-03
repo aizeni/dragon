@@ -1,0 +1,5 @@
+<div>
+	<? for arr as value ?>
+		<p><?= value ?></p>
+	<? endfor ?>
+</div>

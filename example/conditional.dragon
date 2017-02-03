@@ -1,0 +1,9 @@
+<? if data instanceof Array ?>
+	<? if isTrue ?>
+		true
+	<? elseif true ?>
+		false
+	<? endif ?>
+<? else ?>
+	<p>empty data</p>
+<? endif ?>
