@@ -1,0 +1,28 @@
+{
+  "name": "dragon",
+  "version": "0.1.0",
+  "description": "Dragon is a javascript template engine for html",
+  "main": "dist/dragon.js",
+  "directories": {
+    "example": "example"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aizeni/dragon.git"
+  },
+  "keywords": [
+    "template engine",
+    "engine js",
+    "dragon",
+    "dragon engine"
+  ],
+  "author": "Nike Madrid <romanjricki@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/aizeni/dragon/issues"
+  },
+  "homepage": "https://github.com/aizeni/dragon#readme"
+}
