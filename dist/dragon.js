@@ -1,7 +1,6 @@
-
 var dragon, eof;
-
 (function(global) {
+    var is_node = (typeof module !== 'undefined' && typeof module.exports !== 'undefined');
     if (!Object.assign) {
         Object.assign = function (where, e_copy) {
             for (var p in e_copy) {
@@ -44,7 +43,8 @@ var dragon, eof;
         entity: function(e) {
             return e.replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;');
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
         },
         e: function(e) {
             return this.entity(e);
@@ -52,13 +52,7 @@ var dragon, eof;
     };
 
     function loopDragonData(str, data, rp) {
-        var _eof_data = new Eof(), i = 0, body = '', set, repeat = rp || 0, tk;
-        function getVar(name) {
-            if (typeof data[name] === 'undefined') {
-                throw new Error( 'the variable ['+name+'] is not defined' );
-            }
-            return data[name];
-        }
+        var _eof_data = new Eof(), i = 0, body = '', repeat = rp || 0, tk;
 
         while(i <= str.length) {
             tk = str[i];
@@ -68,77 +62,63 @@ var dragon, eof;
                 while (true) {
                     tk = str[i];
                     if (tk === '?' && str[i+1] === '>') {
-                        if (set) {
-                            var json = body;
-                            data = Object.assign(data, Function('getVar', 'return {'+json+'}').
-                            call(null, getVar));
-                            str = str.replace('<?= set' + json +'?>', '\n');
-                            set = '';
-                            body = '';
-                        }else {
-                            var pos_type = body.lastIndexOf('|'),
-                                type = pos_type !== -1 ? body.substr(pos_type+1).replace(/\s+/g, '') : 'raw',
-                                _vars = pos_type !== -1 ? body.substr(0, pos_type) : body,
-                                token,
-                                t_pos = 0,
-                                name_var = '',
-                                _concat = [];
+                        var pos_type = body.lastIndexOf('|'),
+                            type = pos_type !== -1 ? body.substr(pos_type+1).replace(/\s+/g, '') : 'raw',
+                            _vars = pos_type !== -1 ? body.substr(0, pos_type) : body,
+                            token,
+                            t_pos = 0,
+                            name_var = '',
+                            _concat = [];
 
-                            while (true) {
-                                token = _vars[t_pos];
-                                if (typeof token === 'undefined') break;
-                                if (token === '+') {
-                                    t_pos += 1;
-                                    token = _vars[t_pos];
-                                }
-
-                                if (token === "'" || token === '"') {
-                                    var text_concat = token;
-                                    t_pos += 1;
-                                    while (true) {
-                                        token = _vars[t_pos];
-                                        if (token === "'" || token === "'"){
-                                            text_concat += token;
-                                            t_pos++;
-                                            break;
-                                        }
-                                        text_concat += token;
-                                        t_pos += 1;
-                                    }
-                                    _concat.push(text_concat);
-                                } else {
-                                    name_var += token;
-                                }
-
-                                if ((/([a-zA-Z_$]+)\s+/.test(name_var))) {
-                                    name_var = name_var.replace(/\s+/g, '');
-                                    var punctuation = name_var.indexOf('.');
-                                    if (punctuation > 0) {
-                                        var resolve = 'data["'+name_var.substr(0, punctuation)+'"]';
-                                        _concat.push(resolve + name_var.substr(punctuation))
-                                    } else {
-                                        _concat.push((
-                                            typeof data[name_var] !== 'undefined' ? 'data["'+name_var+'"]' : name_var
-                                        ));
-                                    }
-                                    name_var = '';
-                                }
+                        while (true) {
+                            token = _vars[t_pos];
+                            if (typeof token === 'undefined') break;
+                            if (token === '+') {
                                 t_pos += 1;
+                                token = _vars[t_pos];
                             }
-                            var print_value = eval(_concat.join('+'));
-                            if (!_eof_data[type]) {
-                                throw new Error('format type not valid');
+
+                            if (token === "'" || token === '"') {
+                                var text_concat = token;
+                                t_pos += 1;
+                                while (true) {
+                                    token = _vars[t_pos];
+                                    if (token === "'" || token === "'"){
+                                        text_concat += token;
+                                        t_pos++;
+                                        break;
+                                    }
+                                    text_concat += token;
+                                    t_pos += 1;
+                                }
+                                _concat.push(text_concat);
+                            } else {
+                                name_var += token;
                             }
-                            str = str.replace('<?='+ body +'?>', _eof_data[type](print_value));
+
+                            if ((/([a-zA-Z_$]+)\s+/.test(name_var))) {
+                                name_var = name_var.replace(/\s+/g, '');
+                                var punctuation = name_var.indexOf('.');
+                                if (punctuation > 0) {
+                                    var resolve = 'data["'+name_var.substr(0, punctuation)+'"]';
+                                    _concat.push(resolve + name_var.substr(punctuation))
+                                } else {
+                                    _concat.push((
+                                        typeof data[name_var] !== 'undefined' ? 'data["'+name_var+'"]' : name_var
+                                    ));
+                                }
+                                name_var = '';
+                            }
+                            t_pos += 1;
                         }
+                        var print_value = eval(_concat.join('+'));
+                        if (!_eof_data[type]) {
+                            throw new Error('format type not valid');
+                        }
+                        str = str.replace('<?='+ body +'?>', _eof_data[type](print_value));
                         break;
                     }
-
                     body += tk;
-                    if (/([a-zA-Z]+)\s+/.test(body) && typeof set == 'undefined') {
-                        set = body.indexOf('set') >= 0 ? body.replace(/\s+/, '') : '';
-                        body = body.replace(set, '');
-                    }
                     i += 1;
                 }
 
@@ -154,7 +134,6 @@ var dragon, eof;
 
     function getTemplate(filename, callback) {
         var tpl, req;
-
         if (typeof window != 'undefined') {
             req = new (global.XMLHttpRequest ? XMLHttpRequest : ActiveXObject)('Microsoft.XMLHTTP')
             req.open('GET', filename, false);
@@ -166,7 +145,7 @@ var dragon, eof;
                     callback(tpl);
             };
             req.send();
-        } else {
+        } else if (is_node) {
             tpl = require('fs').readFileSync(filename, 'utf8');
         }
         return tpl;
@@ -178,7 +157,6 @@ var dragon, eof;
         this.len = this.source.length;
         this.lines = this.source.split(/\n/);
     };
-
 
     var drBody = function (type, data, pos, line, fn) {
         self = this;
@@ -319,6 +297,19 @@ var dragon, eof;
         _yield: function (b) {
             throw new Error('the yield ['+ b +'] is executed on the file dependency');
         },
+        _set: function (json, x, line) {
+            function getVar(name) {
+                if (typeof data[name] === 'undefined') {
+                    throw new Error( 'the variable ['+name+'] is not defined' );
+                }
+                return data[name];
+            }
+            var nObj = Function('return {'+ json +'};').call(null, getVar);
+            for (var p in nObj) {
+                this.data[p] = nObj[p];
+            }
+            return this.source.replace(this.lines[line], '\n');
+        },
         _extends: function(b, x, line) {
             content_extend.push(getTemplate(b.replace(/\s+/g, '')))
             return this.source.replace(this.lines[line], '\n');
@@ -339,13 +330,12 @@ var dragon, eof;
             var dgn = evaluatorPerformSource(text, data);
             return dgn.source.split(/\n/).join('\n');
         }catch(e) {
-            document.body.innerHTML = ('<div class="stack" style="line-height:30px;font-family:monospace;padding: 10px;font-size:15px;">'+ e.stack.replace(/(.+[\n+|\s]?)/g, '<div>$1</div>\n') + '</div>'
+            document.body.innerHTML = ('<div class="stack" style="line-height:30px;font-family:monospace;padding: 10px;font-size:15px;">'+(e.stack || e).replace(/(.+[\n+|\s]?)/g, '<div>$1</div>\n') + '</div>'
             );
         }
     }
 
     function evaluatorPerformSource(text, data) {
-
         var engine = new Dragon(text, data);
         for(var x = 0, tag, body = "", type, line = 0; x < engine.len; x++) {
             tag = text[x];
@@ -378,7 +368,7 @@ var dragon, eof;
                         type = type.replace(/\s+/g, '');
                         if (tag_cm.length > 0) {
                             engine[tag_cm](body_dragon);
-                            return evaluatorPerformSource(engine.source, data);
+                            return evaluatorPerformSource(engine.source, engine.data);
                         } else if (is_tag_echo && type != 'yield') {
                             var dd = engine.lines[line],
                                 printed = eof.compile(dd, engine.data);
@@ -391,7 +381,7 @@ var dragon, eof;
 
                         if (engine['_'+type]) {
                             var out = engine['_'+ type](body_dragon.substr(type.length+1), x, line);
-                            return evaluatorPerformSource(out, data);
+                            return evaluatorPerformSource(out, engine.data);
                         }
 
                         break;
@@ -417,4 +407,11 @@ var dragon, eof;
 
         return engine;
     }
-}(typeof window != 'undefined' ? window : typeof global != 'undefined' ? global : {}));
+
+    if (is_node) {
+        module.exports = {
+            dragon: dragon,
+            eof: eof
+        };
+    }
+}(window));
