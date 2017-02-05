@@ -1,1 +1,1 @@
-<? include extend-block.dragon ?>
+<? include ./example/extend-block.dragon ?>

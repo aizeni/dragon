@@ -1,0 +1,2 @@
+<? set newData: 'new data' ?>
+<? set otherData: 'other', more: 'more data', getData: getVar('newData') ?>
