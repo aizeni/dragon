@@ -1,5 +1,5 @@
 var dragon, eof;
-(function(global) {
+(function() {
     var is_node = (typeof module !== 'undefined' && typeof module.exports !== 'undefined');
     if (!Object.assign) {
         Object.assign = function (where, e_copy) {
@@ -134,8 +134,8 @@ var dragon, eof;
 
     function getTemplate(filename, callback) {
         var tpl, req;
-        if (typeof window != 'undefined') {
-            req = new (global.XMLHttpRequest ? XMLHttpRequest : ActiveXObject)('Microsoft.XMLHTTP')
+        if (typeof window !== 'undefined') {
+            req = new (window.XMLHttpRequest ? XMLHttpRequest : ActiveXObject)('Microsoft.XMLHTTP')
             req.open('GET', filename, false);
             req.onload = function () {
                 if (this.status !== 200)
@@ -330,8 +330,10 @@ var dragon, eof;
             var dgn = evaluatorPerformSource(text, data);
             return dgn.source.split(/\n/).join('\n');
         }catch(e) {
-            document.body.innerHTML = ('<div class="stack" style="line-height:30px;font-family:monospace;padding: 10px;font-size:15px;">'+(e.stack || e).replace(/(.+[\n+|\s]?)/g, '<div>$1</div>\n') + '</div>'
-            );
+            if (!is_node) {
+                document.body.innerHTML = ('<div class="stack" style="line-height:30px;font-family:monospace;padding: 10px;font-size:15px;">' + (e.stack || e).replace(/(.+[\n+|\s]?)/g, '<div>$1</div>\n') + '</div>');
+            }
+            throw e;
         }
     }
 
@@ -414,4 +416,4 @@ var dragon, eof;
             eof: eof
         };
     }
-}(window));
+}());
