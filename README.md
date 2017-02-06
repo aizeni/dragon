@@ -29,3 +29,5 @@ var html = dragon.compile(/*html*/'<?= str ?>', /*data*/ {
     str: 'hello'
 });
 ```
+# License
+MIT
